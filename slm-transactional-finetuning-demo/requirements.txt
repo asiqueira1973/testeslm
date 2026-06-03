@@ -1,2 +1,9 @@
 pandas
 scikit-learn
+torch
+transformers
+datasets
+peft
+trl
+accelerate
+safetensors
