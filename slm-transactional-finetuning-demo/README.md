@@ -4,7 +4,7 @@
 
 This project demonstrates how historical transactional business data can be converted into an instruction-tuning dataset for Small Language Model (SLM) fine-tuning.
 
-The first version focuses only on repository setup and dataset preparation. It does not fine-tune a model. The goal is to make the data transformation simple, reproducible, and easy to run locally or in Google Colab.
+The first version focuses on repository setup, dataset preparation, and a small LoRA fine-tuning path. The goal is to make the data transformation and first training workflow simple, reproducible, and easy to run locally or in Google Colab.
 
 ## Dataset description
 
@@ -28,16 +28,13 @@ Expected columns:
 
 ## Setup instructions
 
-Create and activate a Python environment, then install the minimal dependencies:
+Create and activate a Python environment, then install the dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-The project intentionally uses only:
-
-- `pandas`
-- `scikit-learn`
+The project uses `pandas` and `scikit-learn` for dataset preparation, plus PyTorch and Hugging Face libraries for LoRA fine-tuning.
 
 ## Add the raw CSV
 
@@ -91,6 +88,53 @@ The `input` is a natural language summary of the loan application. The `output` 
 - `Customer message`
 
 The historical decision always comes from `loan_status`. Simple deterministic rules use credit score, income, requested loan amount, and asset values to generate supporting explanation text, but those rules never override the original historical decision.
+
+
+## Step 2: Fine-tune Gemma with LoRA
+
+After generating `data/processed/train.jsonl` and `data/processed/test.jsonl`, you can fine-tune a LoRA adapter on top of Gemma.
+
+This step should preferably run in a GPU environment such as Google Colab, Kaggle Notebook, or a local CUDA workstation. Gemma models may require accepting the model license/terms on Hugging Face and logging in with a Hugging Face token before the model can be downloaded.
+
+Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+Log in to Hugging Face if required:
+
+```bash
+huggingface-cli login
+```
+
+Train the LoRA adapter:
+
+```bash
+python src/train_lora.py \
+  --train-file data/processed/train.jsonl \
+  --eval-file data/processed/test.jsonl \
+  --output-dir models/loan-approval-gemma-lora
+```
+
+Run inference with the trained adapter:
+
+```bash
+python src/inference.py \
+  --adapter-dir models/loan-approval-gemma-lora \
+  --instruction "Analyze the loan application based on the company's historical credit decisions." \
+  --input "Applicant has 2 dependents, is Graduate, self-employed status is No, annual income is 9600000, requested loan amount is 29900000, loan term is 12 months, CIBIL score is 778, residential assets value is 2400000, commercial assets value is 17600000, luxury assets value is 22700000, and bank asset value is 8000000."
+```
+
+You can also compare base-model outputs with fine-tuned outputs:
+
+```bash
+python src/compare_outputs.py
+```
+
+The comparison script writes `outputs/comparison.md`. If the LoRA adapter has not been trained yet, it skips the fine-tuned comparison and explains why in the output file.
+
+For more detail, see `docs/fine_tuning_notes.md`.
 
 ## Why this matters
 
