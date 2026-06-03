@@ -136,6 +136,18 @@ The comparison script writes `outputs/comparison.md`. If the LoRA adapter has no
 
 For more detail, see `docs/fine_tuning_notes.md`.
 
+## Running the fine-tuning demo in Google Colab
+
+A Colab-friendly walkthrough is available at:
+
+```text
+notebooks/01_finetune_gemma_lora_colab.ipynb
+```
+
+Open the notebook in Google Colab, replace the placeholder repository URL in the first cell if needed, and run the cells from top to bottom. The notebook assumes you have cloned this GitHub repository into the Colab runtime, checks for GPU availability, installs `requirements.txt`, logs in to Hugging Face, verifies the prepared JSONL files, runs the existing LoRA training and inference scripts, and displays the generated comparison report.
+
+Gemma models may require accepting the model license/terms on Hugging Face before download. The LoRA adapter is generated locally in the notebook environment under `models/loan-approval-gemma-lora`; trained model files and generated outputs are ignored by Git and should not be committed.
+
 ## Why this matters
 
 Many companies already have transactional business history: applications, orders, claims, support tickets, approvals, rejections, reviews, and outcomes. This project shows the first step in turning that history into an instruction dataset that can later be used to fine-tune an SLM to reproduce or explain business decisions in a controlled demo setting.
