@@ -42,6 +42,21 @@ All non-target business fields are summarized in natural language. The generated
 - luxury asset value
 - bank asset value
 
+## Derived explanatory signals
+
+The generated `Reason`, `Recommended action`, and `Customer message` use deterministic derived signals from the application row. These signals are used only to make the generated text richer and more consistent with the applicant profile; they do not change the historical decision from `loan_status`.
+
+| Signal | Definition | Categories |
+| --- | --- | --- |
+| `total_assets` | `residential_assets_value + commercial_assets_value + luxury_assets_value + bank_asset_value` | Numeric total asset value. |
+| `loan_to_income_ratio` | `loan_amount / income_annum` | Used to classify affordability. |
+| `loan_to_assets_ratio` | `loan_amount / total_assets` | Used to classify asset coverage. |
+| `credit_profile` | Based on `cibil_score`. | `strong` if score is at least 750; `acceptable` from 650 through 749; `moderate` from 550 through 649; `weak` below 550. |
+| `affordability_profile` | Based on `loan_to_income_ratio`. | `comfortable` at 3.0 or below; `stretched` above 3.0 and up to 5.0; `high_risk` above 5.0. |
+| `asset_coverage` | Based on `loan_to_assets_ratio`. | `strong` at 0.5 or below; `moderate` above 0.5 and up to 0.8; `weak` above 0.8. |
+
+The generated reasons combine multiple signals instead of relying on a single generic statement. For example, an approved row with a strong credit profile can mention credit strength, affordability, and asset coverage together. A rejected row can explain that a weak credit profile, high loan-to-income ratio, limited asset coverage, or the combined historical pattern drove the generated explanation.
+
 ## Output format
 
 Each generated JSONL record has three top-level fields:
@@ -58,9 +73,9 @@ The `output` field is a structured text block, not nested JSON:
 
 ```text
 Decision: approve
-Reason: The applicant has a strong credit profile, compatible income, and relevant asset values.
-Recommended action: Proceed with loan approval.
-Customer message: Your loan application was approved based on the analysis of your financial profile and credit history.
+Reason: The application was approved because the applicant has a strong credit score, comfortable loan affordability, and strong asset coverage.
+Recommended action: Proceed with approval and standard documentation review.
+Customer message: Your loan application was approved based on your credit profile and the overall financial analysis of the application.
 ```
 
 ## Limitations
