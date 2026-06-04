@@ -151,3 +151,45 @@ Gemma models may require accepting the model license/terms on Hugging Face befor
 ## Why this matters
 
 Many companies already have transactional business history: applications, orders, claims, support tickets, approvals, rejections, reviews, and outcomes. This project shows the first step in turning that history into an instruction dataset that can later be used to fine-tune an SLM to reproduce or explain business decisions in a controlled demo setting.
+
+## Executive comparison workflow
+
+After fine-tuning `google/gemma-2-2b-it` with the loan-approval LoRA adapter, you can generate an article-ready evidence report that compares three response styles on the same Portuguese business cases:
+
+1. the base Gemma instruction model,
+2. the fine-tuned Gemma model with the LoRA adapter, and
+3. an optional public LLM answer pasted manually by the user.
+
+The workflow does **not** retrain the model and does **not** require OpenAI, Claude, or Gemini API keys. Public LLM comparison is intentionally manual so the report stays transparent about what was generated locally and what was pasted from an external model.
+
+The Portuguese cases are stored at:
+
+```text
+data/evaluation/portuguese_cases.jsonl
+```
+
+Each case includes the original Portuguese executive question, the normalized instruction and input sent to Gemma, and the expected historical operational output.
+
+To add public LLM responses, copy the template and paste one answer per `case_id`:
+
+```bash
+cp data/evaluation/public_llm_outputs.template.jsonl data/evaluation/public_llm_outputs.jsonl
+```
+
+Then edit `data/evaluation/public_llm_outputs.jsonl` and replace the placeholder `public_llm_output` values with manually collected GPT, Claude, Gemini, or other public LLM answers. If this file does not exist, the comparison still runs and marks public LLM output as not provided.
+
+Run the executive comparison from the project root:
+
+```bash
+python src/compare_executive.py \
+  --adapter-dir models/loan-approval-gemma-lora \
+  --output-file outputs/executive_comparison.md
+```
+
+The script loads the Portuguese cases, runs deterministic inference with the base Gemma model, runs inference with the LoRA adapter when the adapter directory is available, reads optional manual public LLM outputs, and writes:
+
+```text
+outputs/executive_comparison.md
+```
+
+The generated Markdown includes the Portuguese question, normalized model input, expected historical output, base model output, fine-tuned model output, optional public LLM output, and a short observation. Use the report to discuss behavior specialization and operational response format; do not present it as proof that the fine-tuned SLM is generally more intelligent or universally better than public LLMs.
